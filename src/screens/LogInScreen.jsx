@@ -1,67 +1,71 @@
-import React, { useState } from 'react';
-import { View, Button, StyleSheet, Text, TextInput, ActivityIndicator, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, Button, TextInput, ActivityIndicator, StyleSheet } from 'react-native';
+import { AsyncStorage } from 'react-native';
+export default class Login extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { accountId: '', password: '', loading: false, failed: false };
+  }
 
-export default function LogInScreen(props) {
-  const { navigation } = props;
-  const [accountId, setAccountId] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [failed, setFailed] = useState(false);
+  async componentDidMount() {
+    if (await AsyncStorage.getItem('api_token')) {
+      this.props.navigation.navigate('main')
+    }
+  }
 
-  function onSubmit() {
-    setLoading(true);
-    return(
-      fetch(`https://zone-web-mikey.herokuapp.com/api/login.json?account_id=${accountId.text}&password=${password.text}`)
+  onSubmit() {
+    this.setState({ loading: true })
+    return (
+      fetch(`https://zone-web-mikey.herokuapp.com/api/login.json?account_id=${this.state.accountId}&password=${this.state.password}`)
         .then((response) => response.json())
         .then((jsonData) => {
-          setLoading(false);
+          this.setState({ loading: false })
           if (jsonData['api_token']) {
-            navigation.navigate('Main');
+            AsyncStorage.setItem('api_token', jsonData['api_token']);
+            this.props.navigation.navigate('main')
           }
           else {
-            setFailed(true)
+            this.setState({ failed: true })
           }
         })
-        .catch((error) => Alert.alert(error))
-    );
-  };
+        .catch((error) => console.error(error))
+    )
+  }
 
-  function loginButton() {
-    if (loading) {
+  loginButton() {
+    if (this.state.loading) {
       return <ActivityIndicator size="small" />
-    } else {
-      return <Button title="ログイン" onPress={onSubmit} />
     }
-  };
+    else {
+      return <Button title="ログイン" onPress={() => {this.onSubmit()}} />
+    }
+  }
 
-  return(
-    <View style={styles.container}>
-      {failed && <Text>ログインに失敗しました。</Text>}
+  render() {
+    return (
+      <View>
+        {this.state.failed && <Text>ログインに失敗しました。</Text>}
 
-      <TextInput
-        style={styles.textInput}
-        placeholder="アカウントID"
-        onChangeText={(text) => setAccountId({text})}
-      />
+        <TextInput
+          style={styles.textInput}
+          placeholder="アカウントID"
+          onChangeText={(accountId) => this.setState({accountId})}
+        />
 
-      <TextInput
-        secureTextEntry={true}
-        style={styles.textInput}
-        placeholder="パスワード"
-        onChangeText={(text) => setPassword({text})}
-      />
-      {loginButton()}
-    </View>
-    
-  );
-};
+        <TextInput
+          secureTextEntry={true}
+          style={styles.textInput}
+          placeholder="パスワード"
+          onChangeText={(password) => this.setState({password})}
+        />
+
+        {this.loginButton()}
+      </View>
+    );
+  }
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   textInput: {
     height: 60,
     width: 300,
@@ -70,4 +74,4 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
   }
-})
+});

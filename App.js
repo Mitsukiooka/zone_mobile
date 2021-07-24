@@ -1,20 +1,30 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { StyleSheet, View } from 'react-native';
+import { createAppContainer, createSwitchNavigator } from 'react-navigation';
 
-import LogInScreen from './src/screens/LogInScreen';
-import MainScreen from './src/screens/MainScreen';
+import LoginScreen from './src/screens/LogInScreen.jsx';
+import MainScreen from './src/screens/MainScreen.jsx';
 
 export default function App() {
-  const Stack = createStackNavigator();
+  const MainNavigator = createAppContainer(
+    createSwitchNavigator({
+      login: { screen: LoginScreen },
+      main: { screen: MainScreen }
+    })        
+  )
+
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-      initialRouteName='Login'
-      >
-        <Stack.Screen name='Login' component={LogInScreen}/>
-        <Stack.Screen name='Main' component={MainScreen}/>
-      </Stack.Navigator>
-    </NavigationContainer>
+    <View style={styles.container}>
+      <MainNavigator />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
